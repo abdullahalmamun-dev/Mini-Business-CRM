@@ -18,19 +18,28 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+const roleHierarchy = {
+  'Admin': 3,
+  'Manager': 2,
+  'Staff': 1
+};
+
 const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user || !req.user.role) {
       return res.status(403).json({ message: 'Access denied. User role not found.' });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ 
-        message: `Access denied. Requires one of the following roles: ${allowedRoles.join(', ')}` 
-      });
+    const userLevel = roleHierarchy[req.user.role] || 0;
+    const requiredLevel = Math.min(...allowedRoles.map(role => roleHierarchy[role] || 999));
+
+    if (userLevel >= requiredLevel) {
+      return next();
     }
 
-    next();
+    return res.status(403).json({ 
+      message: `Access denied. Requires one of the following roles: ${allowedRoles.join(', ')}` 
+    });
   };
 };
 
