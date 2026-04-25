@@ -19,7 +19,10 @@ app.get('/', (req, res) => {
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
+const customerRoutes = require('./routes/customerRoutes');
+
 app.use('/api/auth', authRoutes);
+app.use('/api/customers', customerRoutes);
 
 // Global error HanDling Middleware
 const { errorHandler } = require('./middleware/errorMiddleware');
