@@ -2,7 +2,6 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
 
-// Load environment variables
 dotenv.config();
 
 async function seed() {
@@ -16,7 +15,7 @@ async function seed() {
   });
 
   try {
-    // 1. Roles and Statuses (Ensure they exist)
+    // 1. Roles and Statuses
     console.log('[seeder]: Seeding roles and statuses...');
     await pool.query(`INSERT INTO roles (id, name) VALUES (1, 'Admin'), (2, 'Manager'), (3, 'Staff') ON DUPLICATE KEY UPDATE name=VALUES(name)`);
     await pool.query(`INSERT INTO customer_statuses (id, name) VALUES (1, 'New'), (2, 'Contacted'), (3, 'Qualified'), (4, 'Proposal Sent'), (5, 'Won'), (6, 'Lost') ON DUPLICATE KEY UPDATE name=VALUES(name)`);
