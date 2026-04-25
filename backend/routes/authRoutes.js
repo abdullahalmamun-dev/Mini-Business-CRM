@@ -1,7 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const { check } = require('express-validator');
 const { login } = require('../controllers/authController');
 
-router.post('/login', login);
+router.post(
+  '/login',
+  [
+    check('email', 'Please include a valid email').isEmail(),
+    check('password', 'Password is required').notEmpty()
+  ],
+  login
+);
 
 module.exports = router;

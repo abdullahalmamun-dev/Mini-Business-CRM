@@ -1,13 +1,15 @@
 const pool = require('../config/db');
 const { comparePassword } = require('../utils/passwordUtils');
 const jwt = require('jsonwebtoken');
+const { validationResult } = require('express-validator');
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required.' });
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
+
+  const { email, password } = req.body;
 
   try {
     const [users] = await pool.query(
