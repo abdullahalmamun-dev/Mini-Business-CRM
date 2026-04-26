@@ -1,10 +1,11 @@
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
+import Login from './pages/Login';
 
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<div>Login (Coming Soon)</div>} />
+      <Route path="/login" element={<Login />} />
       
       <Route element={<Layout />}>
         <Route path="/" element={<div className="glass-panel">Dashboard (Coming Soon)</div>} />
