@@ -16,19 +16,16 @@ const getCustomers = async (req, res, next) => {
     `;
     let queryParams = [];
 
-    // Role filtering: Staff only see their own
     if (req.user.role === 'Staff') {
       baseQuery += ` AND c.assigned_staff_id = ?`;
       queryParams.push(req.user.id);
     }
 
-    // Status filtering
     if (status) {
       baseQuery += ` AND s.name = ?`;
       queryParams.push(status);
     }
 
-    // Search filtering
     if (search) {
       baseQuery += ` AND (c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ?)`;
       const searchVal = `%${search}%`;
