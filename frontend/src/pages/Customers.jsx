@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Search, Filter, UserPlus, Mail, Phone, Building2, User } from 'lucide-react';
+import { Search, Filter, UserPlus, Mail, Phone, Building2, User, Globe, Share2, Tag } from 'lucide-react';
 import DataTable from '../components/common/DataTable';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
@@ -10,13 +10,21 @@ const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', company: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    email: '', 
+    phone: '', 
+    company: '', 
+    country: '', 
+    source: '', 
+    status_id: 1 
+  });
   const [formError, setFormError] = useState('');
 
   const fetchCustomers = useCallback(async () => {
@@ -27,7 +35,7 @@ const Customers = () => {
           page: pagination.page,
           limit: pagination.limit,
           search,
-          status
+          status: statusFilter
         }
       });
       setCustomers(response.data.data);
@@ -37,7 +45,7 @@ const Customers = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.limit, search, status]);
+  }, [pagination.page, pagination.limit, search, statusFilter]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -48,7 +56,8 @@ const Customers = () => {
   }, [fetchCustomers]);
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: name === 'status_id' ? parseInt(value) : value });
   };
 
   const handleAddCustomer = async (e) => {
@@ -59,7 +68,15 @@ const Customers = () => {
     try {
       await axios.post('http://localhost:5000/api/customers', formData);
       setIsModalOpen(false);
-      setFormData({ name: '', email: '', phone: '', company: '' });
+      setFormData({ 
+        name: '', 
+        email: '', 
+        phone: '', 
+        company: '', 
+        country: '', 
+        source: '', 
+        status_id: 1 
+      });
       fetchCustomers(); 
     } catch (err) {
       setFormError(err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Failed to add customer');
@@ -75,7 +92,12 @@ const Customers = () => {
         <span className="text-xs text-slate-500">{row.email}</span>
       </div>
     )},
-    { header: 'Phone', key: 'phone' },
+    { header: 'Company', key: 'company', render: (row) => (
+      <div className="flex flex-col">
+        <span className="text-slate-300">{row.company || '—'}</span>
+        <span className="text-xs text-slate-500">{row.country || ''}</span>
+      </div>
+    )},
     { header: 'Status', key: 'status_name', render: (row) => (
       <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
         row.status_name === 'New' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
@@ -130,9 +152,9 @@ const Customers = () => {
               <Filter size={16} />
             </div>
             <select 
-              value={status}
+              value={statusFilter}
               onChange={(e) => {
-                setStatus(e.target.value);
+                setStatusFilter(e.target.value);
                 setPagination(prev => ({ ...prev, page: 1 }));
               }}
               className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
@@ -160,6 +182,7 @@ const Customers = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Add New Customer"
+        maxWidth="max-w-2xl"
         footer={
           <>
             <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="w-auto">
@@ -171,9 +194,9 @@ const Customers = () => {
           </>
         }
       >
-        <form onSubmit={handleAddCustomer} className="space-y-4">
+        <form onSubmit={handleAddCustomer} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {formError && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+            <div className="col-span-full p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
               {formError}
             </div>
           )}
@@ -212,6 +235,42 @@ const Customers = () => {
             value={formData.company}
             onChange={handleInputChange}
           />
+          <Input
+            label="Country"
+            name="country"
+            icon={Globe}
+            placeholder="e.g. USA"
+            value={formData.country}
+            onChange={handleInputChange}
+          />
+          <Input
+            label="Lead Source"
+            name="source"
+            icon={Share2}
+            placeholder="e.g. Website, Referral"
+            value={formData.source}
+            onChange={handleInputChange}
+          />
+          <div className="space-y-2 col-span-full md:col-span-1">
+            <label className="text-sm font-medium text-slate-300 ml-1 block">Initial Status</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                <Tag size={16} />
+              </div>
+              <select 
+                name="status_id"
+                value={formData.status_id}
+                onChange={handleInputChange}
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+              >
+                <option value={1}>New</option>
+                <option value={2}>Qualified</option>
+                <option value={3}>Negotiation</option>
+                <option value={4}>Closed</option>
+                <option value={5}>Lost</option>
+              </select>
+            </div>
+          </div>
         </form>
       </Modal>
     </div>
