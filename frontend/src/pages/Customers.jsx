@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Search, Filter, UserPlus } from 'lucide-react';
+import { Search, Filter, UserPlus, Mail, Phone, Building2, User } from 'lucide-react';
 import DataTable from '../components/common/DataTable';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
+import Modal from '../components/common/Modal';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -11,6 +12,12 @@ const Customers = () => {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
+  
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', company: '' });
+  const [formError, setFormError] = useState('');
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
@@ -39,6 +46,27 @@ const Customers = () => {
 
     return () => clearTimeout(delayDebounceFn);
   }, [fetchCustomers]);
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleAddCustomer = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setFormError('');
+
+    try {
+      await axios.post('http://localhost:5000/api/customers', formData);
+      setIsModalOpen(false);
+      setFormData({ name: '', email: '', phone: '', company: '' });
+      fetchCustomers(); 
+    } catch (err) {
+      setFormError(err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Failed to add customer');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const columns = [
     { header: 'Name', key: 'name', render: (row) => (
@@ -75,7 +103,10 @@ const Customers = () => {
           <h1 className="text-2xl font-bold text-white tracking-tight">Customers</h1>
           <p className="text-slate-400 text-sm">Manage and track your business leads</p>
         </div>
-        <Button className="md:w-auto px-6">
+        <Button 
+          className="md:w-auto px-6" 
+          onClick={() => setIsModalOpen(true)}
+        >
           <UserPlus size={18} />
           <span>Add Customer</span>
         </Button>
@@ -124,8 +155,68 @@ const Customers = () => {
         pagination={pagination}
         onPageChange={(newPage) => setPagination(prev => ({ ...prev, page: newPage }))}
       />
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Add New Customer"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="w-auto">
+              Cancel
+            </Button>
+            <Button onClick={handleAddCustomer} isLoading={isSubmitting} className="w-auto px-8">
+              Create Lead
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleAddCustomer} className="space-y-4">
+          {formError && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+              {formError}
+            </div>
+          )}
+          <Input
+            label="Full Name"
+            name="name"
+            icon={User}
+            placeholder="e.g. John Doe"
+            value={formData.name}
+            onChange={handleInputChange}
+            required
+          />
+          <Input
+            label="Email Address"
+            name="email"
+            type="email"
+            icon={Mail}
+            placeholder="john@example.com"
+            value={formData.email}
+            onChange={handleInputChange}
+            required
+          />
+          <Input
+            label="Phone Number"
+            name="phone"
+            icon={Phone}
+            placeholder="+1 (555) 000-0000"
+            value={formData.phone}
+            onChange={handleInputChange}
+          />
+          <Input
+            label="Company Name"
+            name="company"
+            icon={Building2}
+            placeholder="Acme Corp"
+            value={formData.company}
+            onChange={handleInputChange}
+          />
+        </form>
+      </Modal>
     </div>
   );
 };
 
 export default Customers;
+
