@@ -14,7 +14,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: 'Reports', icon: BarChart3, path: '/reports', roles: ['Admin', 'Manager'] },
   ];
 
-  // Filter menu items based on user role
   const filteredItems = menuItems.filter(item => 
     !item.roles || (user && item.roles.includes(user.role))
   );
