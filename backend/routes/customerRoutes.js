@@ -7,6 +7,8 @@ const {
   updateCustomer,
   deleteCustomer
 } = require('../controllers/customerController');
+const { getTasksByCustomer, createTask } = require('../controllers/taskController');
+const { getActivitiesByCustomer, createActivity } = require('../controllers/activityController');
 const { body } = require('express-validator');
 const { verifyToken, authorizeRoles } = require('../middleware/authMiddleware');
 
@@ -19,7 +21,22 @@ const customerValidation = [
   body('assigned_staff_id').optional({ nullable: true }).isInt().withMessage('Staff ID must be an integer')
 ];
 
+const taskValidation = [
+  body('task_type').notEmpty().withMessage('Task type is required'),
+  body('priority').isIn(['Low', 'Medium', 'High']).withMessage('Invalid priority'),
+  body('due_date').isDate().withMessage('Valid due date is required')
+];
+
 router.use(verifyToken);
+
+// Customer-specific Tasks & Activities
+router.route('/:id/tasks')
+  .get(getTasksByCustomer)
+  .post(taskValidation, createTask);
+
+router.route('/:id/activities')
+  .get(getActivitiesByCustomer)
+  .post(createActivity);
 
 router.route('/')
   .get(getCustomers)
