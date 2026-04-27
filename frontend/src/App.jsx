@@ -13,7 +13,10 @@ function App() {
           <Route path="/" element={<div className="glass-panel">Dashboard (Coming Soon)</div>} />
           <Route path="/customers" element={<div className="glass-panel">Customer List (Coming Soon)</div>} />
           <Route path="/customers/:id" element={<div className="glass-panel">Customer Detail (Coming Soon)</div>} />
-          <Route path="/reports" element={<div className="glass-panel">Reports (Coming Soon)</div>} />
+          
+          <Route element={<ProtectedRoute allowedRoles={['Admin', 'Manager']} />}>
+            <Route path="/reports" element={<div className="glass-panel">Reports (Coming Soon)</div>} />
+          </Route>
         </Route>
       </Route>
     </Routes>

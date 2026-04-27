@@ -2,13 +2,22 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, CheckSquare, Activity, Settings, LogOut, BarChart3 } from 'lucide-react';
 
+import { useAuth } from '../../context/AuthContext';
+
 const Sidebar = ({ isOpen, toggleSidebar }) => {
+  const { user, logout } = useAuth();
+
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
-    { name: 'Customers', icon: Users, path: '/customers' },
-    { name: 'Tasks', icon: CheckSquare, path: '/tasks' },
-    { name: 'Reports', icon: BarChart3, path: '/reports' },
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/', roles: ['Admin', 'Manager', 'Staff'] },
+    { name: 'Customers', icon: Users, path: '/customers', roles: ['Admin', 'Manager', 'Staff'] },
+    { name: 'Tasks', icon: CheckSquare, path: '/tasks', roles: ['Admin', 'Manager', 'Staff'] },
+    { name: 'Reports', icon: BarChart3, path: '/reports', roles: ['Admin', 'Manager'] },
   ];
+
+  // Filter menu items based on user role
+  const filteredItems = menuItems.filter(item => 
+    !item.roles || (user && item.roles.includes(user.role))
+  );
 
   return (
     <>
@@ -30,7 +39,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         <nav className="p-4 space-y-1 h-[calc(100vh-4rem)] flex flex-col justify-between">
           <div className="space-y-2">
             <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-2">Main Menu</p>
-            {menuItems.map((item) => (
+            {filteredItems.map((item) => (
               <NavLink
                 key={item.name}
                 to={item.path}
@@ -54,7 +63,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               <Settings size={20} />
               <span>Preferences</span>
             </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-all duration-200 mt-2 border border-transparent">
+            <button 
+              onClick={() => {
+                logout();
+                toggleSidebar();
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-all duration-200 mt-2 border border-transparent"
+            >
               <LogOut size={20} />
               <span>Sign Out</span>
             </button>

@@ -1,7 +1,10 @@
 import React from 'react';
 import { Bell, UserCircle, Menu } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const Navbar = ({ toggleSidebar }) => {
+  const { user } = useAuth();
+
   return (
     <header className="bg-[#1e293b]/80 backdrop-blur-md border-b border-white/10 h-16 flex items-center justify-between px-6 sticky top-0 z-20">
       <div className="flex items-center gap-4">
@@ -18,8 +21,8 @@ const Navbar = ({ toggleSidebar }) => {
         </button>
         <div className="flex items-center gap-3 cursor-pointer group pl-4 border-l border-white/10">
           <div className="hidden md:block text-right">
-            <p className="text-sm font-medium text-white">Admin User</p>
-            <p className="text-xs text-blue-400">Admin</p>
+            <p className="text-sm font-medium text-white">{user?.name || 'Guest User'}</p>
+            <p className="text-xs text-blue-400">{user?.role || 'User'}</p>
           </div>
           <UserCircle size={32} className="text-gray-400 group-hover:text-blue-400 transition" />
         </div>
