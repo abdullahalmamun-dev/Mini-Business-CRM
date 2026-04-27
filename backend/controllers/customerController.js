@@ -2,6 +2,8 @@ const pool = require('../config/db');
 
 const getCustomers = async (req, res, next) => {
   try {
+    const search = req.query.search || '';
+    const status = req.query.status || '';
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
@@ -10,12 +12,27 @@ const getCustomers = async (req, res, next) => {
       FROM customers c
       LEFT JOIN customer_statuses s ON c.status_id = s.id
       LEFT JOIN users u ON c.assigned_staff_id = u.id
+      WHERE 1=1
     `;
     let queryParams = [];
 
+    // Role filtering: Staff only see their own
     if (req.user.role === 'Staff') {
-      baseQuery += ` WHERE c.assigned_staff_id = ?`;
+      baseQuery += ` AND c.assigned_staff_id = ?`;
       queryParams.push(req.user.id);
+    }
+
+    // Status filtering
+    if (status) {
+      baseQuery += ` AND s.name = ?`;
+      queryParams.push(status);
+    }
+
+    // Search filtering
+    if (search) {
+      baseQuery += ` AND (c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ?)`;
+      const searchVal = `%${search}%`;
+      queryParams.push(searchVal, searchVal, searchVal);
     }
     
     const [countResult] = await pool.query(`SELECT COUNT(c.id) as total ${baseQuery}`, queryParams);
