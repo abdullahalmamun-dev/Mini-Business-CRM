@@ -23,7 +23,9 @@ const CustomerDetail = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [taskForm, setTaskForm] = useState({
     task_type: '',
     priority: 'Medium',
@@ -31,6 +33,11 @@ const CustomerDetail = () => {
     due_date: '',
     notes: '',
     assigned_staff_id: ''
+  });
+
+  const [activityForm, setActivityForm] = useState({
+    activity_type: 'Note',
+    notes: ''
   });
 
   const fetchData = useCallback(async () => {
@@ -93,6 +100,21 @@ const CustomerDetail = () => {
     }
   };
 
+  const handleActivitySubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await axios.post(`http://localhost:5000/api/customers/${id}/activities`, activityForm);
+      setIsActivityModalOpen(false);
+      setActivityForm({ activity_type: 'Note', notes: '' });
+      fetchData();
+    } catch (error) {
+      alert('Failed to log activity');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleToggleTaskStatus = async (taskId, currentStatus) => {
     const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
     try {
@@ -141,7 +163,11 @@ const CustomerDetail = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" className="w-auto">
+          <Button 
+            variant="ghost" 
+            className="w-auto"
+            onClick={() => setIsActivityModalOpen(true)}
+          >
             <MessageSquare size={18} />
             <span>Log Activity</span>
           </Button>
@@ -460,6 +486,51 @@ const CustomerDetail = () => {
               onChange={(e) => setTaskForm({...taskForm, notes: e.target.value})}
               className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none"
               placeholder="Enter task details..."
+            />
+          </div>
+        </form>
+      </Modal>
+
+      {/* Log Activity Modal */}
+      <Modal
+        isOpen={isActivityModalOpen}
+        onClose={() => setIsActivityModalOpen(false)}
+        title="Log Manual Activity"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setIsActivityModalOpen(false)} className="w-auto">
+              Cancel
+            </Button>
+            <Button onClick={handleActivitySubmit} isLoading={isSubmitting} className="w-auto px-8">
+              Log Note
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleActivitySubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-300 ml-1 block">Activity Type</label>
+            <select 
+              value={activityForm.activity_type}
+              onChange={(e) => setActivityForm({...activityForm, activity_type: e.target.value})}
+              className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+            >
+              <option value="Note">Note</option>
+              <option value="Call">Call</option>
+              <option value="Email">Email</option>
+              <option value="Meeting">Meeting</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-300 ml-1 block">Activity Notes</label>
+            <textarea 
+              rows={4}
+              value={activityForm.notes}
+              onChange={(e) => setActivityForm({...activityForm, notes: e.target.value})}
+              className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none"
+              placeholder="Record the details of the interaction..."
+              required
             />
           </div>
         </form>
