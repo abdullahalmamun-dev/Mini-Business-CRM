@@ -2,6 +2,7 @@ const pool = require('../config/db');
 const { validationResult } = require('express-validator');
 const { logActivity } = require('../utils/activityLogger');
 const { logAudit } = require('../utils/auditLogger');
+const { getIO } = require('../utils/socket');
 
 const getTasks = async (req, res, next) => {
   try {
@@ -56,6 +57,15 @@ const createTask = async (req, res, next) => {
 
     await logActivity(customer_id, req.user.id, 'Task Created', `New task: ${task_type}`);
 
+    // Real-time notification
+    const io = getIO();
+    io.emit('notification', {
+      type: 'TASK_CREATED',
+      message: `New task assigned: ${task_type}`,
+      userId: staff_id,
+      timestamp: new Date()
+    });
+
     res.status(201).json({ message: 'Task created successfully', taskId: result.insertId });
   } catch (error) {
     next(error);
@@ -94,6 +104,16 @@ const updateTask = async (req, res, next) => {
     );
 
     await logAudit(req.user.id, 'Update Task', 'Task', taskId, { status: status || task.status });
+
+    if (status === 'Completed') {
+      const io = getIO();
+      io.emit('notification', {
+        type: 'TASK_COMPLETED',
+        message: `Task completed: ${task.task_type}`,
+        userId: task.assigned_staff_id,
+        timestamp: new Date()
+      });
+    }
 
     res.status(200).json({ message: 'Task updated successfully' });
   } catch (error) {

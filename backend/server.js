@@ -6,6 +6,10 @@ const cookieParser = require('cookie-parser');
 dotenv.config();
 
 const app = express();
+const http = require('http');
+const server = http.createServer(app);
+const { init } = require('./utils/socket');
+const io = init(server);
 
 // Middlewares
 app.use(cors());
@@ -39,9 +43,10 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`[server]: Application is listening on port ${PORT}`);
   });
 }
 
 module.exports = app;
+module.exports.server = server;
