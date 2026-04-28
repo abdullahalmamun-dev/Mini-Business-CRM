@@ -18,6 +18,9 @@ async function seed() {
   });
 
   try {
+    const dbName = process.env.DB_NAME || 'minicrm';
+    await pool.query(`USE ${dbName}`);
+    
     // 1. Roles and Statuses
     console.log('[seeder]: Seeding roles and statuses...');
     await pool.query(`INSERT INTO roles (id, name) VALUES (1, 'Admin'), (2, 'Manager'), (3, 'Staff') ON DUPLICATE KEY UPDATE name=VALUES(name)`);

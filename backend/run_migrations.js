@@ -6,13 +6,14 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 async function runMigrations() {
-  console.log('[migrations]: Connecting to database...');
-  const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'mini_crm',
-    port: process.env.DB_PORT || 3306,
+  console.log('[migrations]: Connecting to TiDB Cloud...');
+  
+  // 1. Connect without a specific database first to ensure the DB exists
+  const connection = await mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT || 4000,
     ssl: {
       rejectUnauthorized: false
     },
@@ -20,6 +21,11 @@ async function runMigrations() {
   });
 
   try {
+    const dbName = process.env.DB_NAME || 'minicrm';
+    console.log(`[migrations]: Ensuring database "${dbName}" exists...`);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
+    await connection.query(`USE ${dbName}`);
+
     const migrationsDir = path.join(__dirname, 'database', 'migrations');
     const files = fs.readdirSync(migrationsDir).sort();
 
@@ -29,8 +35,16 @@ async function runMigrations() {
         const filePath = path.join(migrationsDir, file);
         const sql = fs.readFileSync(filePath, 'utf8');
         
-        await pool.query(sql);
-        console.log(`[migrations]: Successfully executed ${file}`);
+        try {
+          await connection.query(sql);
+          console.log(`[migrations]: Successfully executed ${file}`);
+        } catch (err) {
+          if (err.code === 'ER_DUP_KEYNAME' || err.code === 'ER_DUP_FIELDNAME') {
+            console.log(`[migrations]: Skipping ${file} (Index/Field already exists)`);
+          } else {
+            throw err;
+          }
+        }
       }
     }
     
@@ -38,7 +52,7 @@ async function runMigrations() {
   } catch (error) {
     console.error('[migrations]: Error running migrations:', error);
   } finally {
-    pool.end();
+    await connection.end();
   }
 }
 
