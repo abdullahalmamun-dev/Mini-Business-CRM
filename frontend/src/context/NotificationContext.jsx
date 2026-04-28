@@ -12,7 +12,7 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     if (!user) return;
 
-    const socket = io('http://localhost:5000'); 
+    const socket = io('https://mini-business-crm-backend.vercel.app'); 
 
     socket.on('notification', (notification) => {
 

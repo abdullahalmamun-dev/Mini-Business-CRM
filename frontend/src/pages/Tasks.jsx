@@ -18,7 +18,7 @@ const Tasks = () => {
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/tasks');
+      const response = await axios.get('https://mini-business-crm-backend.vercel.app/api/tasks');
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -34,7 +34,7 @@ const Tasks = () => {
   const handleToggleStatus = async (task) => {
     const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
     try {
-      await axios.put(`http://localhost:5000/api/tasks/${task.id}`, {
+      await axios.put(`https://mini-business-crm-backend.vercel.app/api/tasks/${task.id}`, {
         status: newStatus
       });
       setTasks(tasks.map(t => t.id === task.id ? { ...t, status: newStatus } : t));

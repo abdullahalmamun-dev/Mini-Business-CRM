@@ -39,7 +39,7 @@ const Customers = () => {
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/customers', {
+      const response = await axios.get('https://mini-business-crm-backend.vercel.app/api/customers', {
         params: {
           page: pagination.page,
           limit: pagination.limit,
@@ -59,7 +59,7 @@ const Customers = () => {
   const fetchStaff = async () => {
     if (currentUser?.role === 'Admin' || currentUser?.role === 'Manager') {
       try {
-        const response = await axios.get('http://localhost:5000/api/users/staff');
+        const response = await axios.get('https://mini-business-crm-backend.vercel.app/api/users/staff');
         setStaff(response.data);
       } catch (error) {
         console.error('Error fetching staff:', error);
@@ -96,9 +96,9 @@ const Customers = () => {
 
     try {
       if (editId) {
-        await axios.put(`http://localhost:5000/api/customers/${editId}`, formData);
+        await axios.put(`https://mini-business-crm-backend.vercel.app/api/customers/${editId}`, formData);
       } else {
-        await axios.post('http://localhost:5000/api/customers', formData);
+        await axios.post('https://mini-business-crm-backend.vercel.app/api/customers', formData);
       }
       
       setIsModalOpen(false);
@@ -114,7 +114,7 @@ const Customers = () => {
   const handleDeleteCustomer = async () => {
     setIsSubmitting(true);
     try {
-      await axios.delete(`http://localhost:5000/api/customers/${deleteId}`);
+      await axios.delete(`https://mini-business-crm-backend.vercel.app/api/customers/${deleteId}`);
       setIsDeleteModalOpen(false);
       setDeleteId(null);
       fetchCustomers();
@@ -157,7 +157,7 @@ const Customers = () => {
 
   const handleDownloadCSV = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/customers/export', {
+      const response = await axios.get('https://mini-business-crm-backend.vercel.app/api/customers/export', {
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));

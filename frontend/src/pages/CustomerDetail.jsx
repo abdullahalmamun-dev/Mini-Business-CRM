@@ -45,9 +45,9 @@ const CustomerDetail = () => {
     setLoading(true);
     try {
       const [custRes, tasksRes, activitiesRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/customers/${id}`),
-        axios.get(`http://localhost:5000/api/customers/${id}/tasks`),
-        axios.get(`http://localhost:5000/api/customers/${id}/activities`)
+        axios.get(`https://mini-business-crm-backend.vercel.app/api/customers/${id}`),
+        axios.get(`https://mini-business-crm-backend.vercel.app/api/customers/${id}/tasks`),
+        axios.get(`https://mini-business-crm-backend.vercel.app/api/customers/${id}/activities`)
       ]);
       setCustomer(custRes.data);
       setTasks(tasksRes.data);
@@ -64,7 +64,7 @@ const CustomerDetail = () => {
 
   const fetchStaff = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/users/staff');
+      const response = await axios.get('https://mini-business-crm-backend.vercel.app/api/users/staff');
       setStaff(response.data);
     } catch (error) {
       console.error('Error fetching staff:', error);
@@ -92,7 +92,7 @@ const CustomerDetail = () => {
     setIsSubmitting(true);
     setFormErrors({});
     try {
-      await axios.post(`http://localhost:5000/api/customers/${id}/tasks`, {
+      await axios.post(`https://mini-business-crm-backend.vercel.app/api/customers/${id}/tasks`, {
         ...taskForm,
         assigned_staff_id: taskForm.assigned_staff_id || null
       });
@@ -122,7 +122,7 @@ const CustomerDetail = () => {
     setIsSubmitting(true);
     setFormErrors({});
     try {
-      await axios.post(`http://localhost:5000/api/customers/${id}/activities`, activityForm);
+      await axios.post(`https://mini-business-crm-backend.vercel.app/api/customers/${id}/activities`, activityForm);
       setIsActivityModalOpen(false);
       setActivityForm({ activity_type: 'Note', notes: '' });
       fetchData();
@@ -136,7 +136,7 @@ const CustomerDetail = () => {
   const handleToggleTaskStatus = async (taskId, currentStatus) => {
     const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
     try {
-      await axios.put(`http://localhost:5000/api/tasks/${taskId}`, { status: newStatus });
+      await axios.put(`https://mini-business-crm-backend.vercel.app/api/tasks/${taskId}`, { status: newStatus });
       fetchData();
     } catch (error) {
       alert('Failed to update task status');

@@ -40,7 +40,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
+      const response = await axios.post('https://mini-business-crm-backend.vercel.app/api/auth/login', formData);
       
       login(response.data.user, response.data.token);
       

@@ -17,7 +17,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/reports/dashboard');
+        const response = await axios.get('https://mini-business-crm-backend.vercel.app/api/reports/dashboard');
         setData(response.data);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
