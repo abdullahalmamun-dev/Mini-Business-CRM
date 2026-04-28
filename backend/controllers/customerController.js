@@ -81,7 +81,6 @@ const getCustomerById = async (req, res, next) => {
 
     const customer = customers[0];
 
-    // RBAC: Staff can only view their own customers
     if (req.user.role === 'Staff' && customer.assigned_staff_id !== req.user.id) {
       return res.status(403).json({ message: 'Access denied. You do not own this record.' });
     }
@@ -99,17 +98,15 @@ const createCustomer = async (req, res, next) => {
   }
 
   try {
-    const { name, email, phone, company, status_id, assigned_staff_id } = req.body;
+    const { name, email, phone, company, country, source, status_id, assigned_staff_id } = req.body;
 
-    // Default status to 'New' (1) if not provided
     const finalStatusId = status_id || 1;
     
-    // Default assignment: If Staff, assign to self. If Admin/Manager, assign as requested or null.
     const finalStaffId = req.user.role === 'Staff' ? req.user.id : (assigned_staff_id || null);
 
     const [result] = await pool.query(
-      `INSERT INTO customers (name, email, phone, company, status_id, assigned_staff_id) VALUES (?, ?, ?, ?, ?, ?)`,
-      [name, email, phone || null, company || null, finalStatusId, finalStaffId]
+      `INSERT INTO customers (name, email, phone, company, country, source, status_id, assigned_staff_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, email, phone || null, company || null, country || null, source || null, finalStatusId, finalStaffId]
     );
 
     res.status(201).json({ 
@@ -128,9 +125,8 @@ const updateCustomer = async (req, res, next) => {
   }
 
   try {
-    const { name, email, phone, company, status_id, assigned_staff_id } = req.body;
+    const { name, email, phone, company, country, source, status_id, assigned_staff_id } = req.body;
     
-    // Check if customer exists and verify ownership for Staff
     const [existing] = await pool.query('SELECT assigned_staff_id FROM customers WHERE id = ?', [req.params.id]);
     if (existing.length === 0) {
       return res.status(404).json({ message: 'Customer not found' });
@@ -141,8 +137,8 @@ const updateCustomer = async (req, res, next) => {
     }
 
     await pool.query(
-      `UPDATE customers SET name = ?, email = ?, phone = ?, company = ?, status_id = ?, assigned_staff_id = ? WHERE id = ?`,
-      [name, email, phone, company, status_id, assigned_staff_id, req.params.id]
+      `UPDATE customers SET name = ?, email = ?, phone = ?, company = ?, country = ?, source = ?, status_id = ?, assigned_staff_id = ? WHERE id = ?`,
+      [name, email, phone, company, country, source, status_id, assigned_staff_id, req.params.id]
     );
 
     res.status(200).json({ message: 'Customer updated successfully' });
@@ -182,7 +178,6 @@ const exportCustomers = async (req, res, next) => {
 
     const [customers] = await pool.query(query, queryParams);
 
-    // Generate CSV
     const headers = ['Name', 'Email', 'Phone', 'Company', 'Country', 'Source', 'Status', 'Assigned To', 'Created At'];
     const rows = customers.map(c => [
       c.name, c.email, c.phone, c.company, c.country, c.source, c.status, c.assigned_to, c.created_at

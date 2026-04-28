@@ -18,17 +18,19 @@ const CustomerDetail = () => {
   const [customer, setCustomer] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Task Modal states
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [taskForm, setTaskForm] = useState({
     task_type: '',
     priority: 'Medium',
+    status: 'Pending',
     due_date: '',
-    notes: ''
+    notes: '',
+    assigned_staff_id: ''
   });
 
   const fetchData = useCallback(async () => {
@@ -52,17 +54,37 @@ const CustomerDetail = () => {
     }
   }, [id, navigate]);
 
+  const fetchStaff = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/users/staff');
+      setStaff(response.data);
+    } catch (error) {
+      console.error('Error fetching staff:', error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchStaff();
   }, [fetchData]);
 
   const handleTaskSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await axios.post(`http://localhost:5000/api/customers/${id}/tasks`, taskForm);
+      await axios.post(`http://localhost:5000/api/customers/${id}/tasks`, {
+        ...taskForm,
+        assigned_staff_id: taskForm.assigned_staff_id || null
+      });
       setIsTaskModalOpen(false);
-      setTaskForm({ task_type: '', priority: 'Medium', due_date: '', notes: '' });
+      setTaskForm({ 
+        task_type: '', 
+        priority: 'Medium', 
+        status: 'Pending', 
+        due_date: '', 
+        notes: '',
+        assigned_staff_id: ''
+      });
       fetchData();
     } catch (error) {
       alert('Failed to create task');
@@ -131,7 +153,6 @@ const CustomerDetail = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Profile Info */}
         <div className="lg:col-span-1 space-y-6">
           <div className="glass-panel p-6 space-y-6">
             <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Contact Information</h3>
@@ -191,9 +212,7 @@ const CustomerDetail = () => {
           </div>
         </div>
 
-        {/* Right Column: Tasks & History */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Tabs Navigation */}
           <div className="flex gap-1 p-1 bg-slate-900/50 rounded-xl border border-white/10 w-fit">
             <button 
               onClick={() => setActiveTab('overview')}
@@ -223,7 +242,6 @@ const CustomerDetail = () => {
 
           {activeTab === 'overview' && (
             <div className="space-y-6 animate-fade-in">
-              {/* Upcoming Tasks Widget */}
               <div className="glass-panel p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-white flex items-center gap-2">
@@ -262,7 +280,6 @@ const CustomerDetail = () => {
                 </div>
               </div>
 
-              {/* Recent Activity Widget */}
               <div className="glass-panel p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-white flex items-center gap-2">
@@ -363,7 +380,6 @@ const CustomerDetail = () => {
         </div>
       </div>
 
-      {/* New Task Modal */}
       <Modal
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
@@ -407,6 +423,34 @@ const CustomerDetail = () => {
               onChange={(e) => setTaskForm({...taskForm, due_date: e.target.value})}
               required
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300 ml-1 block">Task Status</label>
+              <select 
+                value={taskForm.status}
+                onChange={(e) => setTaskForm({...taskForm, status: e.target.value})}
+                className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+              >
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300 ml-1 block">Assign To Staff</label>
+              <select 
+                value={taskForm.assigned_staff_id}
+                onChange={(e) => setTaskForm({...taskForm, assigned_staff_id: e.target.value})}
+                className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+              >
+                <option value="">Unassigned</option>
+                {staff.map(s => (
+                  <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-300 ml-1 block">Additional Notes</label>

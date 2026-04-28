@@ -6,7 +6,6 @@ const { verifyToken, authorizeRoles } = require('../middleware/authMiddleware');
 
 router.use(verifyToken);
 
-// Global task routes
 router.get('/', getTasks);
 
 const taskValidation = [
