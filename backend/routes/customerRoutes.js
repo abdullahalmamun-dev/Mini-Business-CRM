@@ -10,7 +10,7 @@ const {
   importCustomers
 } = require('../controllers/customerController');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
 const { getTasksByCustomer, createTask } = require('../controllers/taskController');
 const { getActivitiesByCustomer, createActivity } = require('../controllers/activityController');
 const { body } = require('express-validator');

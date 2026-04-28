@@ -202,10 +202,8 @@ const exportCustomers = async (req, res, next) => {
   }
 };
 
-const fs = require('fs');
+const { Readable } = require('stream');
 const csv = require('csv-parser');
-
-// ... (previous functions)
 
 const importCustomers = async (req, res, next) => {
   if (!req.file) {
@@ -218,14 +216,13 @@ const importCustomers = async (req, res, next) => {
     errors: 0
   };
 
-  fs.createReadStream(req.file.path)
+  Readable.from(req.file.buffer)
     .pipe(csv())
     .on('data', (data) => customers.push(data))
     .on('end', async () => {
       for (const customer of customers) {
         try {
           const { name, email, phone, company, country, source } = customer;
-          // Default status to 'New' (ID 1) if not provided
           const status_id = 1; 
           
           await pool.query(
@@ -238,9 +235,6 @@ const importCustomers = async (req, res, next) => {
           console.error('[Import Error]:', error.message);
         }
       }
-
-      // Cleanup uploaded file
-      fs.unlinkSync(req.file.path);
 
       await logAudit(req.user.id, 'Import Customers', 'Customer', null, results);
 
