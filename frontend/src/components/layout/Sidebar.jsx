@@ -58,10 +58,19 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
           <div className="space-y-2">
             <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Settings</p>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-200 border border-transparent">
+            <NavLink 
+              to="/settings"
+              className={({ isActive }) => 
+                `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 border ${
+                  isActive 
+                    ? 'bg-blue-500/15 text-blue-400 font-medium border-blue-500/20' 
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white border-transparent'
+                }`
+              }
+            >
               <Settings size={20} />
               <span>Preferences</span>
-            </button>
+            </NavLink>
             <button 
               onClick={() => {
                 logout();

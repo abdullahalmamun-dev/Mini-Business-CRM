@@ -173,10 +173,10 @@ const Reports = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <ReportCard title="Avg Lead Response" value="1.2h" icon={<Clock className="text-blue-400" />} />
-        <ReportCard title="Conversion Rate" value="24%" icon={<TrendingUpIcon className="text-emerald-400" />} />
-        <ReportCard title="Active Campaigns" value="3" icon={<FileText className="text-purple-400" />} />
-        <ReportCard title="Retention Score" value="9.4" icon={<BarChart3 className="text-amber-400" />} />
+        <ReportCard title="Avg Lead Response" value={`${data.summary.avgResponse}h`} icon={<Clock className="text-blue-400" />} />
+        <ReportCard title="Conversion Rate" value={`${data.summary.conversionRate}%`} icon={<TrendingUpIcon className="text-emerald-400" />} />
+        <ReportCard title="Active Campaigns" value={data.summary.activeCampaigns} icon={<FileText className="text-purple-400" />} />
+        <ReportCard title="Retention Score" value={data.summary.retentionScore} icon={<BarChart3 className="text-amber-400" />} />
       </div>
     </div>
   );

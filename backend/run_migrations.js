@@ -13,6 +13,9 @@ async function runMigrations() {
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'mini_crm',
     port: process.env.DB_PORT || 3306,
+    ssl: {
+      rejectUnauthorized: false
+    },
     multipleStatements: true 
   });
 
