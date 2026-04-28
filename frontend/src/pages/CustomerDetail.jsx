@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
-  User, Mail, Phone, Building2, Globe, Share2, Tag, Calendar, 
+  User,Phone, Building2, Globe, Share2, Tag, Calendar, 
   Plus, CheckCircle2, Clock, AlertCircle, History, ArrowLeft,
-  ChevronRight, MessageSquare
+  ChevronRight, MessageSquare, FileText, PhoneCall, Mail, Users, RefreshCw
 } from 'lucide-react';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -39,6 +39,7 @@ const CustomerDetail = () => {
     activity_type: 'Note',
     notes: ''
   });
+  const [formErrors, setFormErrors] = useState({});
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -77,7 +78,19 @@ const CustomerDetail = () => {
 
   const handleTaskSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation
+    const errors = {};
+    if (!taskForm.task_type.trim()) errors.task_type = 'Task description is required';
+    if (!taskForm.due_date) errors.due_date = 'Due date is required';
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
     setIsSubmitting(true);
+    setFormErrors({});
     try {
       await axios.post(`http://localhost:5000/api/customers/${id}/tasks`, {
         ...taskForm,
@@ -102,7 +115,12 @@ const CustomerDetail = () => {
 
   const handleActivitySubmit = async (e) => {
     e.preventDefault();
+    if (!activityForm.notes.trim()) {
+      setFormErrors({ notes: 'Activity notes are required' });
+      return;
+    }
     setIsSubmitting(true);
+    setFormErrors({});
     try {
       await axios.post(`http://localhost:5000/api/customers/${id}/activities`, activityForm);
       setIsActivityModalOpen(false);
@@ -380,26 +398,54 @@ const CustomerDetail = () => {
           {activeTab === 'history' && (
             <div className="animate-fade-in glass-panel p-8">
               <div className="space-y-8 relative before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-px before:bg-white/10">
-                {activities.map((activity, idx) => (
-                  <div key={activity.id} className="flex gap-6 relative group">
-                    <div className="w-8 h-8 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center z-10 flex-shrink-0 group-hover:border-blue-500 transition-colors">
-                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-white">{activity.activity_type}</h4>
-                        <span className="text-xs text-slate-500 font-medium bg-white/5 px-2 py-1 rounded-md">
-                          {new Date(activity.created_at).toLocaleDateString()}
-                        </span>
+                {activities.map((activity) => {
+                  let Icon = FileText;
+                  let colorClass = 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+                  let dotColor = 'bg-blue-500';
+
+                  if (activity.activity_type.toLowerCase().includes('call')) {
+                    Icon = PhoneCall;
+                    colorClass = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+                    dotColor = 'bg-emerald-500';
+                  } else if (activity.activity_type.toLowerCase().includes('email')) {
+                    Icon = Mail;
+                    colorClass = 'text-purple-400 bg-purple-500/10 border-purple-500/20';
+                    dotColor = 'bg-purple-500';
+                  } else if (activity.activity_type.toLowerCase().includes('completed')) {
+                    Icon = CheckCircle2;
+                    colorClass = 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+                    dotColor = 'bg-amber-500';
+                  } else if (activity.activity_type.toLowerCase().includes('status')) {
+                    Icon = RefreshCw;
+                    colorClass = 'text-pink-400 bg-pink-500/10 border-pink-500/20';
+                    dotColor = 'bg-pink-500';
+                  } else if (activity.activity_type.toLowerCase().includes('created')) {
+                    Icon = Plus;
+                    colorClass = 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20';
+                    dotColor = 'bg-indigo-500';
+                  }
+
+                  return (
+                    <div key={activity.id} className="flex gap-6 relative group">
+                      <div className={`w-8 h-8 rounded-full bg-slate-900 border flex items-center justify-center z-10 flex-shrink-0 transition-all ${colorClass}`}>
+                        <Icon size={14} />
                       </div>
-                      <p className="text-sm text-slate-400 mt-1">{activity.notes}</p>
-                      <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500 font-medium">
-                        <User size={12} />
-                        Logged by <span className="text-blue-400">{activity.staff_name || 'System Auto-Log'}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold text-white">{activity.activity_type}</h4>
+                          <span className="text-xs text-slate-500 font-medium bg-white/5 px-2 py-1 rounded-md">
+                            {new Date(activity.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-400 mt-1">{activity.notes}</p>
+                        <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                          <Users size={12} />
+                          Logged by <span className="text-blue-400">{activity.staff_name || 'System Auto-Log'}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -408,7 +454,10 @@ const CustomerDetail = () => {
 
       <Modal
         isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
+        onClose={() => {
+          setIsTaskModalOpen(false);
+          setFormErrors({});
+        }}
         title="Add New Task"
         footer={
           <>
@@ -426,7 +475,11 @@ const CustomerDetail = () => {
             label="Task Description"
             placeholder="e.g. Follow up on proposal"
             value={taskForm.task_type}
-            onChange={(e) => setTaskForm({...taskForm, task_type: e.target.value})}
+            onChange={(e) => {
+              setTaskForm({...taskForm, task_type: e.target.value});
+              if (formErrors.task_type) setFormErrors(prev => ({ ...prev, task_type: null }));
+            }}
+            error={formErrors.task_type}
             required
           />
           <div className="grid grid-cols-2 gap-4">
@@ -446,7 +499,11 @@ const CustomerDetail = () => {
               label="Due Date"
               type="date"
               value={taskForm.due_date}
-              onChange={(e) => setTaskForm({...taskForm, due_date: e.target.value})}
+              onChange={(e) => {
+                setTaskForm({...taskForm, due_date: e.target.value});
+                if (formErrors.due_date) setFormErrors(prev => ({ ...prev, due_date: null }));
+              }}
+              error={formErrors.due_date}
               required
             />
           </div>
@@ -494,11 +551,17 @@ const CustomerDetail = () => {
       {/* Log Activity Modal */}
       <Modal
         isOpen={isActivityModalOpen}
-        onClose={() => setIsActivityModalOpen(false)}
+        onClose={() => {
+          setIsActivityModalOpen(false);
+          setFormErrors({});
+        }}
         title="Log Manual Activity"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setIsActivityModalOpen(false)} className="w-auto">
+            <Button variant="ghost" onClick={() => {
+              setIsActivityModalOpen(false);
+              setFormErrors({});
+            }} className="w-auto">
               Cancel
             </Button>
             <Button onClick={handleActivitySubmit} isLoading={isSubmitting} className="w-auto px-8">
@@ -527,11 +590,15 @@ const CustomerDetail = () => {
             <textarea 
               rows={4}
               value={activityForm.notes}
-              onChange={(e) => setActivityForm({...activityForm, notes: e.target.value})}
-              className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none"
+              onChange={(e) => {
+                setActivityForm({...activityForm, notes: e.target.value});
+                if (formErrors.notes) setFormErrors(prev => ({ ...prev, notes: null }));
+              }}
+              className={`w-full px-4 py-3 rounded-xl bg-slate-900/50 border ${formErrors.notes ? 'border-red-500/50 focus:ring-red-500/50' : 'border-slate-700/50 focus:ring-blue-500/50'} text-white placeholder-slate-500 focus:outline-none transition-all resize-none`}
               placeholder="Record the details of the interaction..."
               required
             />
+            {formErrors.notes && <p className="text-xs text-red-500 ml-1">{formErrors.notes}</p>}
           </div>
         </form>
       </Modal>
