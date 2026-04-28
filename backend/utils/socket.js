@@ -3,27 +3,40 @@ const { Server } = require('socket.io');
 let io;
 
 const init = (server) => {
-  io = new Server(server, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST']
+  try {
+    // Check if we are in a serverless environment (Vercel)
+    if (process.env.VERCEL) {
+      console.log('[socket]: Running on Vercel. Persistant WebSockets are not supported. Skipping init.');
+      return null;
     }
-  });
 
-  io.on('connection', (socket) => {
-    console.log(`[socket]: User connected ${socket.id}`);
-    
-    socket.on('disconnect', () => {
-      console.log(`[socket]: User disconnected ${socket.id}`);
+    io = new Server(server, {
+      cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+      }
     });
-  });
 
-  return io;
+    io.on('connection', (socket) => {
+      console.log(`[socket]: User connected ${socket.id}`);
+      socket.on('disconnect', () => {
+        console.log(`[socket]: User disconnected ${socket.id}`);
+      });
+    });
+
+    return io;
+  } catch (error) {
+    console.warn('[socket]: Failed to initialize Socket.io:', error.message);
+    return null;
+  }
 };
 
 const getIO = () => {
+  // If io isn't initialized (like on Vercel), return a mock object to prevent crashes
   if (!io) {
-    throw new Error('Socket.io not initialized');
+    return {
+      emit: () => { /* No-op on Vercel */ }
+    };
   }
   return io;
 };
