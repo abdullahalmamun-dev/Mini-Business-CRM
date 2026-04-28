@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const { validationResult } = require('express-validator');
 const { logActivity } = require('../utils/activityLogger');
+const { logAudit } = require('../utils/auditLogger');
 
 const getTasks = async (req, res, next) => {
   try {
@@ -92,6 +93,8 @@ const updateTask = async (req, res, next) => {
       ]
     );
 
+    await logAudit(req.user.id, 'Update Task', 'Task', taskId, { status: status || task.status });
+
     res.status(200).json({ message: 'Task updated successfully' });
   } catch (error) {
     next(error);
@@ -100,10 +103,15 @@ const updateTask = async (req, res, next) => {
 
 const deleteTask = async (req, res, next) => {
   try {
+    const [[task]] = await pool.query('SELECT task_type FROM tasks WHERE id = ?', [req.params.taskId]);
     const [result] = await pool.query('DELETE FROM tasks WHERE id = ?', [req.params.taskId]);
+    
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Task not found' });
     }
+
+    await logAudit(req.user.id, 'Delete Task', 'Task', req.params.taskId, { type: task?.task_type });
+
     res.status(200).json({ message: 'Task deleted successfully' });
   } catch (error) {
     next(error);

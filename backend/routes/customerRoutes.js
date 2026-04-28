@@ -6,8 +6,11 @@ const {
   createCustomer,
   updateCustomer,
   deleteCustomer,
-  exportCustomers
+  exportCustomers,
+  importCustomers
 } = require('../controllers/customerController');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 const { getTasksByCustomer, createTask } = require('../controllers/taskController');
 const { getActivitiesByCustomer, createActivity } = require('../controllers/activityController');
 const { body } = require('express-validator');
@@ -40,6 +43,7 @@ router.route('/:id/activities')
   .post(createActivity);
 
 router.get('/export', exportCustomers);
+router.post('/import', upload.single('file'), importCustomers);
 
 router.route('/')
   .get(getCustomers)

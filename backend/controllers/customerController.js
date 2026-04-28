@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { logAudit } = require('../utils/auditLogger');
 
 const getCustomers = async (req, res, next) => {
   try {
@@ -137,9 +138,11 @@ const updateCustomer = async (req, res, next) => {
     }
 
     await pool.query(
-      `UPDATE customers SET name = ?, email = ?, phone = ?, company = ?, country = ?, source = ?, status_id = ?, assigned_staff_id = ? WHERE id = ?`,
-      [name, email, phone, company, country, source, status_id, assigned_staff_id, req.params.id]
+      `UPDATE customers SET name = ?, email = ?, phone = ?, company = ?, status_id = ?, assigned_staff_id = ?, country = ?, source = ? WHERE id = ?`,
+      [name, email, phone, company, status_id, assigned_staff_id, country, source, req.params.id]
     );
+
+    await logAudit(req.user.id, 'Update Customer', 'Customer', req.params.id, { name, status_id });
 
     res.status(200).json({ message: 'Customer updated successfully' });
   } catch (error) {
@@ -149,11 +152,14 @@ const updateCustomer = async (req, res, next) => {
 
 const deleteCustomer = async (req, res, next) => {
   try {
+    const [[customer]] = await pool.query('SELECT name FROM customers WHERE id = ?', [req.params.id]);
     const [result] = await pool.query('DELETE FROM customers WHERE id = ?', [req.params.id]);
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Customer not found' });
     }
+
+    await logAudit(req.user.id, 'Delete Customer', 'Customer', req.params.id, { name: customer?.name });
 
     res.status(200).json({ message: 'Customer deleted successfully' });
   } catch (error) {
@@ -196,11 +202,61 @@ const exportCustomers = async (req, res, next) => {
   }
 };
 
+const fs = require('fs');
+const csv = require('csv-parser');
+
+// ... (previous functions)
+
+const importCustomers = async (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+
+  const customers = [];
+  const results = {
+    success: 0,
+    errors: 0
+  };
+
+  fs.createReadStream(req.file.path)
+    .pipe(csv())
+    .on('data', (data) => customers.push(data))
+    .on('end', async () => {
+      for (const customer of customers) {
+        try {
+          const { name, email, phone, company, country, source } = customer;
+          // Default status to 'New' (ID 1) if not provided
+          const status_id = 1; 
+          
+          await pool.query(
+            'INSERT INTO customers (name, email, phone, company, country, source, status_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [name, email, phone, company, country, source, status_id]
+          );
+          results.success++;
+        } catch (error) {
+          results.errors++;
+          console.error('[Import Error]:', error.message);
+        }
+      }
+
+      // Cleanup uploaded file
+      fs.unlinkSync(req.file.path);
+
+      await logAudit(req.user.id, 'Import Customers', 'Customer', null, results);
+
+      res.status(200).json({ 
+        message: 'Import completed', 
+        summary: results 
+      });
+    });
+};
+
 module.exports = {
   getCustomers,
   getCustomerById,
   createCustomer,
   updateCustomer,
   deleteCustomer,
-  exportCustomers
+  exportCustomers,
+  importCustomers
 };
