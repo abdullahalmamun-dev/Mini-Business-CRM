@@ -5,6 +5,7 @@ import Customers from './pages/Customers';
 import CustomerDetail from './pages/CustomerDetail';
 import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
+import Tasks from './pages/Tasks';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/customers/:id" element={<CustomerDetail />} />
+          <Route path="/tasks" element={<Tasks />} />
           
           <Route element={<ProtectedRoute allowedRoles={['Admin', 'Manager']} />}>
             <Route path="/reports" element={<Reports />} />
