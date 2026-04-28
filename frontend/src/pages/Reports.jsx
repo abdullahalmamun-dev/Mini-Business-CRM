@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   BarChart3, FileText, Download, Calendar, 
-  Filter, ChevronRight, UserPlus, Clock
+  Filter, ChevronRight, UserPlus, Clock, X, Check
 } from 'lucide-react';
 import { Spinner } from '../components/common/Loaders';
 import Button from '../components/common/Button';
@@ -10,6 +10,11 @@ import Button from '../components/common/Button';
 const Reports = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('All Time');
+
+  const filters = ['All Time', 'Last 30 Days', 'Last 90 Days', 'This Year'];
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -24,6 +29,28 @@ const Reports = () => {
     };
     fetchStats();
   }, []);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await axios.get('http://localhost:5000/api/customers/export', {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `CRM_Export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export data. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -42,12 +69,51 @@ const Reports = () => {
           <h1 className="text-2xl font-bold text-white tracking-tight">Business Intelligence</h1>
           <p className="text-slate-400 text-sm">Detailed performance metrics and assignment reports.</p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="ghost" className="w-auto">
-            <Filter size={18} />
-            <span>Filter</span>
-          </Button>
-          <Button className="w-auto px-6" onClick={() => window.location.href = 'http://localhost:5000/api/customers/export'}>
+        <div className="flex gap-3 relative">
+          <div className="relative">
+            <Button 
+              variant="ghost" 
+              className={`w-auto transition-all ${isFilterOpen ? 'bg-white/10 text-white' : ''}`}
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+            >
+              <Filter size={18} />
+              <span>{activeFilter}</span>
+            </Button>
+            
+            {isFilterOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setIsFilterOpen(false)}
+                ></div>
+                <div className="absolute right-0 mt-2 w-48 glass-panel border border-white/10 p-2 z-20 animate-fade-in shadow-2xl">
+                  {filters.map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => {
+                        setActiveFilter(f);
+                        setIsFilterOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                        activeFilter === f 
+                          ? 'bg-blue-500/20 text-blue-400' 
+                          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      {f}
+                      {activeFilter === f && <Check size={14} />}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          <Button 
+            className="w-auto px-6" 
+            onClick={handleExport}
+            isLoading={isExporting}
+          >
             <Download size={18} />
             <span>Export CSV</span>
           </Button>
