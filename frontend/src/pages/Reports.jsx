@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   BarChart3, FileText, Download, Calendar, 
-  Filter, ChevronRight, UserPlus
+  Filter, ChevronRight, UserPlus, Clock
 } from 'lucide-react';
 import { Spinner } from '../components/common/Loaders';
 import Button from '../components/common/Button';
