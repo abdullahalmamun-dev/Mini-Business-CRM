@@ -165,10 +165,47 @@ const deleteCustomer = async (req, res, next) => {
   }
 };
 
+const exportCustomers = async (req, res, next) => {
+  try {
+    let query = `
+      SELECT c.name, c.email, c.phone, c.company, c.country, c.source, s.name as status, u.name as assigned_to, c.created_at
+      FROM customers c
+      LEFT JOIN customer_statuses s ON c.status_id = s.id
+      LEFT JOIN users u ON c.assigned_staff_id = u.id
+    `;
+    let queryParams = [];
+
+    if (req.user.role === 'Staff') {
+      query += ` WHERE c.assigned_staff_id = ?`;
+      queryParams.push(req.user.id);
+    }
+
+    const [customers] = await pool.query(query, queryParams);
+
+    // Generate CSV
+    const headers = ['Name', 'Email', 'Phone', 'Company', 'Country', 'Source', 'Status', 'Assigned To', 'Created At'];
+    const rows = customers.map(c => [
+      c.name, c.email, c.phone, c.company, c.country, c.source, c.status, c.assigned_to, c.created_at
+    ]);
+
+    let csvContent = headers.join(',') + '\n';
+    rows.forEach(row => {
+      csvContent += row.map(cell => `"${cell || ''}"`).join(',') + '\n';
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=customers.csv');
+    res.status(200).send(csvContent);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getCustomers,
   getCustomerById,
   createCustomer,
   updateCustomer,
-  deleteCustomer
+  deleteCustomer,
+  exportCustomers
 };

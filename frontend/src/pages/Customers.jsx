@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Search, Filter, UserPlus, Mail, Phone, Building2, User, Globe, Share2, Tag } from 'lucide-react';
+import { Search, Filter, UserPlus, Mail, Phone, Building2, User, Globe, Share2, Tag, Edit2, Trash2, Eye, Download } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import DataTable from '../components/common/DataTable';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
+import { useAuth } from '../context/AuthContext';
 
 const Customers = () => {
+  const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [customers, setCustomers] = useState([]);
+  const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -15,7 +20,10 @@ const Customers = () => {
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
   const [formData, setFormData] = useState({ 
     name: '', 
     email: '', 
@@ -23,7 +31,8 @@ const Customers = () => {
     company: '', 
     country: '', 
     source: '', 
-    status_id: 1 
+    status_id: 1,
+    assigned_staff_id: ''
   });
   const [formError, setFormError] = useState('');
 
@@ -47,6 +56,21 @@ const Customers = () => {
     }
   }, [pagination.page, pagination.limit, search, statusFilter]);
 
+  const fetchStaff = async () => {
+    if (currentUser?.role === 'Admin' || currentUser?.role === 'Manager') {
+      try {
+        const response = await axios.get('http://localhost:5000/api/users/staff');
+        setStaff(response.data);
+      } catch (error) {
+        console.error('Error fetching staff:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchStaff();
+  }, [currentUser]);
+
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchCustomers();
@@ -57,31 +81,95 @@ const Customers = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: name === 'status_id' ? parseInt(value) : value });
+    setFormData({ 
+      ...formData, 
+      [name]: (name === 'status_id' || name === 'assigned_staff_id') 
+        ? (value === '' ? null : parseInt(value)) 
+        : value 
+    });
   };
 
-  const handleAddCustomer = async (e) => {
+  const handleSaveCustomer = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setFormError('');
 
     try {
-      await axios.post('http://localhost:5000/api/customers', formData);
+      if (editId) {
+        await axios.put(`http://localhost:5000/api/customers/${editId}`, formData);
+      } else {
+        await axios.post('http://localhost:5000/api/customers', formData);
+      }
+      
       setIsModalOpen(false);
-      setFormData({ 
-        name: '', 
-        email: '', 
-        phone: '', 
-        company: '', 
-        country: '', 
-        source: '', 
-        status_id: 1 
-      });
+      resetForm();
       fetchCustomers(); 
     } catch (err) {
-      setFormError(err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Failed to add customer');
+      setFormError(err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Operation failed');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteCustomer = async () => {
+    setIsSubmitting(true);
+    try {
+      await axios.delete(`http://localhost:5000/api/customers/${deleteId}`);
+      setIsDeleteModalOpen(false);
+      setDeleteId(null);
+      fetchCustomers();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete customer');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEditModal = (customer) => {
+    setEditId(customer.id);
+    setFormData({
+      name: customer.name || '',
+      email: customer.email || '',
+      phone: customer.phone || '',
+      company: customer.company || '',
+      country: customer.country || '',
+      source: customer.source || '',
+      status_id: customer.status_id || 1,
+      assigned_staff_id: customer.assigned_staff_id || ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const resetForm = () => {
+    setEditId(null);
+    setFormData({ 
+      name: '', 
+      email: '', 
+      phone: '', 
+      company: '', 
+      country: '', 
+      source: '', 
+      status_id: 1,
+      assigned_staff_id: ''
+    });
+    setFormError('');
+  };
+
+  const handleDownloadCSV = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/customers/export', {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'customers.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading CSV:', error);
+      alert('Failed to download CSV');
     }
   };
 
@@ -116,6 +204,36 @@ const Customers = () => {
         {new Date(row.created_at).toLocaleDateString()}
       </span>
     )},
+    { header: 'Actions', key: 'actions', render: (row) => (
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={() => navigate(`/customers/${row.id}`)}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+          title="View Details"
+        >
+          <Eye size={18} />
+        </button>
+        <button 
+          onClick={() => openEditModal(row)}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+          title="Edit"
+        >
+          <Edit2 size={18} />
+        </button>
+        {(currentUser?.role === 'Admin') && (
+          <button 
+            onClick={() => {
+              setDeleteId(row.id);
+              setIsDeleteModalOpen(true);
+            }}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            title="Delete"
+          >
+            <Trash2 size={18} />
+          </button>
+        )}
+      </div>
+    )},
   ];
 
   return (
@@ -125,13 +243,23 @@ const Customers = () => {
           <h1 className="text-2xl font-bold text-white tracking-tight">Customers</h1>
           <p className="text-slate-400 text-sm">Manage and track your business leads</p>
         </div>
-        <Button 
-          className="md:w-auto px-6" 
-          onClick={() => setIsModalOpen(true)}
-        >
-          <UserPlus size={18} />
-          <span>Add Customer</span>
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            className="md:w-auto px-4" 
+            onClick={handleDownloadCSV}
+          >
+            <Download size={18} />
+            <span className="hidden sm:inline">Export</span>
+          </Button>
+          <Button 
+            className="md:w-auto px-6" 
+            onClick={() => setIsModalOpen(true)}
+          >
+            <UserPlus size={18} />
+            <span>Add Customer</span>
+          </Button>
+        </div>
       </div>
 
       <div className="glass-panel p-4 flex flex-col md:flex-row gap-4">
@@ -180,21 +308,27 @@ const Customers = () => {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Add New Customer"
+        onClose={() => {
+          setIsModalOpen(false);
+          resetForm();
+        }}
+        title={editId ? "Edit Customer" : "Add New Customer"}
         maxWidth="max-w-2xl"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="w-auto">
+            <Button variant="ghost" onClick={() => {
+              setIsModalOpen(false);
+              resetForm();
+            }} className="w-auto">
               Cancel
             </Button>
-            <Button onClick={handleAddCustomer} isLoading={isSubmitting} className="w-auto px-8">
-              Create Lead
+            <Button onClick={handleSaveCustomer} isLoading={isSubmitting} className="w-auto px-8">
+              {editId ? "Update Lead" : "Create Lead"}
             </Button>
           </>
         }
       >
-        <form onSubmit={handleAddCustomer} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSaveCustomer} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {formError && (
             <div className="col-span-full p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
               {formError}
@@ -271,7 +405,53 @@ const Customers = () => {
               </select>
             </div>
           </div>
+
+          {(currentUser?.role === 'Admin' || currentUser?.role === 'Manager') && (
+            <div className="space-y-2 col-span-full md:col-span-1">
+              <label className="text-sm font-medium text-slate-300 ml-1 block">Assign To Staff</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                  <User size={16} />
+                </div>
+                <select 
+                  name="assigned_staff_id"
+                  value={formData.assigned_staff_id || ''}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Unassigned</option>
+                  {staff.map(s => (
+                    <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirm Deletion"
+        maxWidth="max-w-md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setIsDeleteModalOpen(false)} className="w-auto">
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDeleteCustomer} isLoading={isSubmitting} className="w-auto">
+              Delete Permanently
+            </Button>
+          </>
+        }
+      >
+        <div className="text-center py-4">
+          <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Trash2 size={32} />
+          </div>
+          <p className="text-slate-300">Are you sure you want to delete this customer? This action cannot be undone and all associated data will be lost.</p>
+        </div>
       </Modal>
     </div>
   );

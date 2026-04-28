@@ -5,7 +5,8 @@ const {
   getCustomerById,
   createCustomer,
   updateCustomer,
-  deleteCustomer
+  deleteCustomer,
+  exportCustomers
 } = require('../controllers/customerController');
 const { getTasksByCustomer, createTask } = require('../controllers/taskController');
 const { getActivitiesByCustomer, createActivity } = require('../controllers/activityController');
@@ -37,6 +38,8 @@ router.route('/:id/tasks')
 router.route('/:id/activities')
   .get(getActivitiesByCustomer)
   .post(createActivity);
+
+router.get('/export', exportCustomers);
 
 router.route('/')
   .get(getCustomers)
