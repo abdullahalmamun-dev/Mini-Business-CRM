@@ -11,14 +11,18 @@ const verifyToken = (req, res, next) => {
   }
   
   if (!token) {
+    console.log('[Auth Debug]: No token found in headers or cookies');
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_key');
+    const secret = process.env.JWT_SECRET || 'super_secret_key';
+    const decoded = jwt.verify(token, secret);
     req.user = decoded; 
+    console.log('[Auth Debug]: Token verified for user:', decoded.id);
     next();
   } catch (error) {
+    console.log('[Auth Debug]: Token verification failed:', error.message);
     res.status(401).json({ message: 'Invalid or expired token.' });
   }
 };
