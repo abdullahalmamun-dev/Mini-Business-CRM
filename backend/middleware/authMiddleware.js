@@ -2,13 +2,12 @@ const jwt = require('jsonwebtoken');
 
 const verifyToken = (req, res, next) => {
   let token;
-  const authHeader = req.headers.authorization || req.headers['x-authorization'];
+  const authHeader = req.headers.authorization || req.headers['x-authorization'] || req.headers['crm-access-token'];
   
-  // Log all headers for production debugging
-  console.log('[Auth Debug] Incoming Headers:', JSON.stringify(req.headers));
-
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.split(' ')[1];
+  } else if (req.query && req.query.token) {
+    token = req.query.token;
   } else if (req.cookies && req.cookies.token) {
     token = req.cookies.token;
   }
