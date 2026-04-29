@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
+import Button from '../components/common/Button';
 
 const Settings = () => {
   const { user } = useAuth();
