@@ -1,88 +1,96 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, CheckSquare, Activity, Settings, LogOut, BarChart3 } from 'lucide-react';
-
+import { NavLink, useNavigate } from 'react-router-dom';
+import { 
+  LayoutDashboard, Users, ClipboardList, 
+  BarChart3, Settings, LogOut, ChevronLeft,
+  Briefcase
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
-  const { user, logout } = useAuth();
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
 
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/', roles: ['Admin', 'Manager', 'Staff'] },
-    { name: 'Customers', icon: Users, path: '/customers', roles: ['Admin', 'Manager', 'Staff'] },
-    { name: 'Tasks', icon: CheckSquare, path: '/tasks', roles: ['Admin', 'Manager', 'Staff'] },
-    { name: 'Reports', icon: BarChart3, path: '/reports', roles: ['Admin', 'Manager'] },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+    { icon: Users, label: 'Customers', path: '/customers' },
+    { icon: ClipboardList, label: 'Tasks', path: '/tasks' },
+    { icon: BarChart3, label: 'Reports', path: '/reports' },
+    { icon: Settings, label: 'Preferences', path: '/settings' },
   ];
 
-  const filteredItems = menuItems.filter(item => 
-    !item.roles || (user && item.roles.includes(user.role))
-  );
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <>
+      {/* Overlay for mobile */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden" 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden transition-opacity duration-300"
           onClick={toggleSidebar}
-        ></div>
+        />
       )}
 
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#0f172a] border-r border-white/10 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="h-16 flex items-center px-6 border-b border-white/10">
-          <div className="flex items-center gap-2 text-blue-500">
-            <Activity size={28} className="font-bold" />
-            <span className="text-xl font-bold text-white tracking-wider">MiniCRM</span>
+      <aside className={`
+        fixed top-0 left-0 bottom-0 z-40
+        w-64 bg-[#030712] border-r border-white/5
+        transform transition-all duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="h-full flex flex-col p-6">
+          {/* Logo Area */}
+          <div className="flex items-center gap-3 mb-12 px-2">
+            <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white">
+              <Briefcase size={18} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white tracking-tight leading-none">MiniCRM</h1>
+              <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Enterprise</span>
+            </div>
           </div>
-        </div>
 
-        <nav className="p-4 space-y-1 h-[calc(100vh-4rem)] flex flex-col justify-between">
-          <div className="space-y-2">
-            <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-2">Main Menu</p>
-            {filteredItems.map((item) => (
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1">
+            {menuItems.map((item) => (
               <NavLink
-                key={item.name}
+                key={item.path}
                 to={item.path}
-                className={({ isActive }) => 
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                    isActive 
-                      ? 'bg-blue-500/15 text-blue-400 font-medium border border-blue-500/20' 
-                      : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'
-                  }`
-                }
+                className={({ isActive }) => `
+                  flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200
+                  ${isActive 
+                    ? 'bg-white/5 text-white shadow-sm shadow-black/20' 
+                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.02]'}
+                `}
               >
-                <item.icon size={20} />
-                <span>{item.name}</span>
+                {({ isActive }) => (
+                  <>
+                    <item.icon size={18} strokeWidth={isActive ? 2 : 1.5} />
+                    {item.label}
+                  </>
+                )}
               </NavLink>
             ))}
-          </div>
+          </nav>
 
-          <div className="space-y-2">
-            <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Settings</p>
-            <NavLink 
-              to="/settings"
-              className={({ isActive }) => 
-                `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 border ${
-                  isActive 
-                    ? 'bg-blue-500/15 text-blue-400 font-medium border-blue-500/20' 
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white border-transparent'
-                }`
-              }
+          {/* User Section & Logout */}
+          <div className="mt-auto pt-6 border-t border-white/5">
+            <div className="px-4 py-3 mb-4 rounded-xl bg-white/[0.02] border border-white/5">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-tighter mb-1">Signed in as</p>
+              <p className="text-sm font-semibold text-white truncate">{user?.name || 'User'}</p>
+            </div>
+            
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-red-400 hover:bg-red-400/5 rounded-lg transition-all duration-200"
             >
-              <Settings size={20} />
-              <span>Preferences</span>
-            </NavLink>
-            <button 
-              onClick={() => {
-                logout();
-                toggleSidebar();
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-all duration-200 mt-2 border border-transparent"
-            >
-              <LogOut size={20} />
-              <span>Sign Out</span>
+              <LogOut size={18} strokeWidth={1.5} />
+              Sign Out
             </button>
           </div>
-        </nav>
+        </div>
       </aside>
     </>
   );
