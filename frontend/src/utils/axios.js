@@ -13,6 +13,7 @@ instance.interceptors.request.use((config) => {
   if (token && token !== 'undefined' && token !== 'null') {
     console.log(`[Axios Debug]: Token found. Attaching to ${config.url}`);
     config.headers['Authorization'] = `Bearer ${token}`;
+    config.headers['X-Authorization'] = `Bearer ${token}`; // Fallback for Vercel stripping
   } else {
     console.log(`[Axios Debug]: No valid token found for ${config.url}`);
   }
