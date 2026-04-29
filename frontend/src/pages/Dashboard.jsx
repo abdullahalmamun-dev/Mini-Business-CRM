@@ -82,7 +82,7 @@ const Dashboard = () => {
             <h3 className="text-lg font-semibold text-white tracking-tight">Revenue Growth</h3>
             <button className="text-slate-500 hover:text-white transition"><MoreHorizontal size={20} /></button>
           </div>
-          <div className="h-80">
+          <div className="h-80 min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data?.growthStats || []}>
                 <defs>
@@ -123,7 +123,7 @@ const Dashboard = () => {
 
         <div className="bg-[#111827] border border-white/5 rounded-2xl p-8">
           <h3 className="text-lg font-semibold text-white tracking-tight mb-8">Lead Sources</h3>
-          <div className="h-80">
+          <div className="h-80 min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.statusStats || []} layout="vertical">
                 <XAxis type="number" hide />

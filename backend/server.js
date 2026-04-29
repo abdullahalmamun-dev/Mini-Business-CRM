@@ -13,25 +13,26 @@ const io = init(server);
 
 // Middlewares
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://mini-business-crm-frontend.vercel.app'] 
-    : true,
+  origin: true, 
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Authorization', 'Origin', 'Accept', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie']
 };
 
 app.use(cors(corsOptions));
 
-// Explicitly preserve Authorization header for Vercel
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://mini-business-crm-frontend.vercel.app');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Authorization');
+  const origin = req.headers.origin;
+  if (origin && (origin.includes('vercel.app') || origin.includes('localhost'))) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Authorization');
   
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
+    return res.status(200).end();
   }
   next();
 });
