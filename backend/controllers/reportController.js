@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 
 const getDashboardStats = async (req, res, next) => {
+  console.log('[Report Controller]: Fetching stats for user:', req.user?.id);
   try {
     const [[{ totalCustomers }]] = await pool.query('SELECT COUNT(*) as totalCustomers FROM customers');
     const [[{ totalTasks }]] = await pool.query('SELECT COUNT(*) as totalTasks FROM tasks');
