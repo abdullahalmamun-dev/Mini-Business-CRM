@@ -5,12 +5,21 @@ import {
   Check, Lock, Eye, EyeOff
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import Button from '../components/common/Button';
+import api from '../utils/axios';
 
 const Settings = () => {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('profile');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [passwords, setPasswords] = useState({ current: '', new: '' });
   const [profileName, setProfileName] = useState(user?.name || '');
+  const [notifications, setNotifications] = useState({
+    email: true,
+    browser: true,
+    tasks: false
+  });
 
   const handleSave = async () => {
     setLoading(true);

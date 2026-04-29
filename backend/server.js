@@ -22,6 +22,20 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Explicitly preserve Authorization header for Vercel
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://mini-business-crm-frontend.vercel.app');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(cookieParser());
 
