@@ -41,11 +41,10 @@ const Login = () => {
           <p className="text-slate-500 text-sm font-medium">Enter your credentials to access the terminal</p>
         </div>
 
-        {/* Login Card */}
         <div className="bg-[#111827]/50 border border-white/5 p-8 rounded-[32px] shadow-2xl shadow-black/50 backdrop-blur-xl">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Work Email</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
               <input
                 type="email"
                 required
@@ -57,7 +56,7 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Security Key</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
               <input
                 type="password"
                 required
@@ -89,6 +88,16 @@ const Login = () => {
               )}
             </button>
           </form>
+
+          <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
+            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center">Demo Access Keys</p>
+            <div className="grid grid-cols-1 gap-2">
+              <CredentialBadge role="Admin" email="admin@crm.com" />
+              <CredentialBadge role="Manager" email="manager@crm.com" />
+              <CredentialBadge role="Staff" email="staff1@crm.com" />
+            </div>
+            <p className="text-[10px] text-slate-700 text-center">Password for all: <span className="text-slate-500 font-mono">password123</span></p>
+          </div>
         </div>
 
         <p className="mt-10 text-center text-xs text-slate-600 font-medium">
@@ -98,5 +107,13 @@ const Login = () => {
     </div>
   );
 };
+
+const CredentialBadge = ({ role, email }) => (
+  <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors group cursor-pointer" 
+       onClick={() => navigator.clipboard.writeText(email)}>
+    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{role}</span>
+    <span className="text-[11px] text-slate-400 group-hover:text-blue-400 transition-colors">{email}</span>
+  </div>
+);
 
 export default Login;
