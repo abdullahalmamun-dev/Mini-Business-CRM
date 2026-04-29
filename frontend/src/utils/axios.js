@@ -10,7 +10,10 @@ const instance = axios.create({
 instance.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
+    console.log(`[Axios Debug]: Attaching token to ${config.url}`);
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    console.log(`[Axios Debug]: No token found for ${config.url}`);
   }
   return config;
 });
