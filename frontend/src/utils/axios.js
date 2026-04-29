@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+const isProduction = window.location.hostname.includes('vercel.app');
+const productionUrl = 'https://mini-business-crm-backend.vercel.app/api';
+
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  baseURL: import.meta.env.VITE_API_URL || (isProduction ? productionUrl : 'http://localhost:5000/api')
 });
 
 instance.interceptors.request.use((config) => {
