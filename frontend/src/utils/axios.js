@@ -9,13 +9,17 @@ const instance = axios.create({
 
 instance.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) {
-    console.log(`[Axios Debug]: Attaching token to ${config.url}`);
-    config.headers.Authorization = `Bearer ${token}`;
+  
+  if (token && token !== 'undefined' && token !== 'null') {
+    console.log(`[Axios Debug]: Token found. Attaching to ${config.url}`);
+    config.headers['Authorization'] = `Bearer ${token}`;
   } else {
-    console.log(`[Axios Debug]: No token found for ${config.url}`);
+    console.log(`[Axios Debug]: No valid token found for ${config.url}`);
   }
+  
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 export default instance;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '../utils/axios';
 import { Search, Filter, UserPlus, Mail, Phone, Building2, User, Globe, Share2, Tag, Edit2, Trash2, Eye, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DataTable from '../components/common/DataTable';
@@ -39,7 +39,7 @@ const Customers = () => {
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get('https://mini-business-crm-backend.vercel.app/api/customers', {
+      const response = await api.get('/customers', {
         params: {
           page: pagination.page,
           limit: pagination.limit,
@@ -59,7 +59,7 @@ const Customers = () => {
   const fetchStaff = async () => {
     if (currentUser?.role === 'Admin' || currentUser?.role === 'Manager') {
       try {
-        const response = await axios.get('https://mini-business-crm-backend.vercel.app/api/users/staff');
+        const response = await api.get('/users/staff');
         setStaff(response.data);
       } catch (error) {
         console.error('Error fetching staff:', error);
@@ -96,9 +96,9 @@ const Customers = () => {
 
     try {
       if (editId) {
-        await axios.put(`https://mini-business-crm-backend.vercel.app/api/customers/${editId}`, formData);
+        await api.put(`/customers/${editId}`, formData);
       } else {
-        await axios.post('https://mini-business-crm-backend.vercel.app/api/customers', formData);
+        await api.post('/customers', formData);
       }
       
       setIsModalOpen(false);
@@ -114,7 +114,7 @@ const Customers = () => {
   const handleDeleteCustomer = async () => {
     setIsSubmitting(true);
     try {
-      await axios.delete(`https://mini-business-crm-backend.vercel.app/api/customers/${deleteId}`);
+      await api.delete(`/customers/${deleteId}`);
       setIsDeleteModalOpen(false);
       setDeleteId(null);
       fetchCustomers();
@@ -157,7 +157,7 @@ const Customers = () => {
 
   const handleDownloadCSV = async () => {
     try {
-      const response = await axios.get('https://mini-business-crm-backend.vercel.app/api/customers/export', {
+      const response = await api.get('/customers/export', {
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));

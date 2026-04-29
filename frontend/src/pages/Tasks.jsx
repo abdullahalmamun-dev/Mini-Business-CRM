@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/axios';
 import { 
   CheckCircle2, Clock, AlertCircle, Filter, 
   Search, Calendar, User, ChevronRight, Check
@@ -18,7 +18,7 @@ const Tasks = () => {
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get('https://mini-business-crm-backend.vercel.app/api/tasks');
+      const response = await api.get('/tasks');
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -34,7 +34,7 @@ const Tasks = () => {
   const handleToggleStatus = async (task) => {
     const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
     try {
-      await axios.put(`https://mini-business-crm-backend.vercel.app/api/tasks/${task.id}`, {
+      await api.put(`/tasks/${task.id}`, {
         status: newStatus
       });
       setTasks(tasks.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
