@@ -12,18 +12,22 @@ const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    console.log('[Login Debug]: Attempting login for:', email);
     const [users] = await pool.query(
       `SELECT u.*, r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.email = ?`,
       [email]
     );
 
     if (users.length === 0) {
+      console.log('[Login Debug]: No user found with email:', email);
       return res.status(401).json({ message: 'Invalid email or password.' });
     }
 
     const user = users[0];
+    console.log('[Login Debug]: User found. Comparing password hash...');
 
     const isMatch = await comparePassword(password, user.password);
+    console.log('[Login Debug]: Comparison result:', isMatch);
 
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password.' });

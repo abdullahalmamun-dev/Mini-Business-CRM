@@ -5,32 +5,38 @@ import {
   Check, Lock, Eye, EyeOff
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import Button from '../components/common/Button';
 
 const Settings = () => {
   const { user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState('profile');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [passwords, setPasswords] = useState({ current: '', new: '' });
+  const [profileName, setProfileName] = useState(user?.name || '');
 
-  // Form States
-  const [showPassword, setShowPassword] = useState(false);
-  const [notifications, setNotifications] = useState({
-    email: true,
-    browser: true,
-    tasks: false,
-    marketing: false
-  });
-
-  const handleSave = () => {
+  const handleSave = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setSuccess(false);
+    try {
+      if (activeTab === 'profile') {
+        await api.put('/users/profile', { name: profileName });
+      } else if (activeTab === 'security') {
+        if (!passwords.current || !passwords.new) {
+          alert('Please fill in both password fields');
+          return;
+        }
+        await api.put('/users/password', { 
+          currentPassword: passwords.current, 
+          newPassword: passwords.new 
+        });
+        setPasswords({ current: '', new: '' });
+      }
+      
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    }, 800);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update settings');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderContent = () => {
@@ -41,8 +47,13 @@ const Settings = () => {
             <div className="glass-panel p-6">
               <h3 className="text-lg font-semibold text-white mb-6">Profile Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputGroup label="Full Name" icon={<User size={16} />} defaultValue={user?.name} />
-                <InputGroup label="Email Address" icon={<Mail size={16} />} defaultValue={user?.email} disabled />
+                <InputGroup 
+                  label="Full Name" 
+                  icon={<User size={16} />} 
+                  value={profileName} 
+                  onChange={(e) => setProfileName(e.target.value)} 
+                />
+                <InputGroup label="Email Address" icon={<Mail size={16} />} value={user?.email} disabled />
                 <InputGroup label="Organization" icon={<Building size={16} />} placeholder="Acme Corp" />
                 <InputGroup label="Language" icon={<Globe size={16} />} type="select" options={['English (US)', 'Spanish', 'French']} />
               </div>
@@ -87,14 +98,24 @@ const Settings = () => {
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Current Password</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                    <input type={showPassword ? 'text' : 'password'} className="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-blue-500/50 outline-none" />
+                    <input 
+                      type={showPassword ? 'text' : 'password'} 
+                      value={passwords.current}
+                      onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                      className="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-blue-500/50 outline-none" 
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">New Password</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                    <input type={showPassword ? 'text' : 'password'} className="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-blue-500/50 outline-none" />
+                    <input 
+                      type={showPassword ? 'text' : 'password'} 
+                      value={passwords.new}
+                      onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+                      className="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-blue-500/50 outline-none" 
+                    />
                   </div>
                 </div>
                 <button 
@@ -108,33 +129,7 @@ const Settings = () => {
             </div>
           </div>
         );
-      case 'appearance':
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="glass-panel p-6">
-              <h3 className="text-lg font-semibold text-white mb-6">Appearance Customization</h3>
-              <div className="space-y-8">
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-4">Application Theme</label>
-                  <div className="flex gap-4">
-                    <ThemeOption 
-                      icon={<Sun size={20} />} 
-                      label="Light" 
-                      active={theme === 'light'} 
-                      onClick={() => toggleTheme('light')} 
-                    />
-                    <ThemeOption 
-                      icon={<Moon size={20} />} 
-                      label="Dark" 
-                      active={theme === 'dark'} 
-                      onClick={() => toggleTheme('dark')} 
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+
       default:
         return null;
     }
@@ -167,12 +162,7 @@ const Settings = () => {
             active={activeTab === 'security'} 
             onClick={() => setActiveTab('security')}
           />
-          <SettingsTab 
-            icon={<Palette size={18} />} 
-            label="Appearance" 
-            active={activeTab === 'appearance'} 
-            onClick={() => setActiveTab('appearance')}
-          />
+
         </div>
 
         <div className="lg:col-span-2 space-y-6">
@@ -247,18 +237,6 @@ const SettingsTab = ({ icon, label, active, onClick }) => (
   </button>
 );
 
-const ThemeOption = ({ icon, label, active, onClick }) => (
-  <div 
-    onClick={onClick}
-    className={`flex-1 flex flex-col items-center gap-3 p-6 rounded-2xl border transition-all cursor-pointer ${
-      active 
-        ? 'bg-blue-500/10 border-blue-500/50 text-blue-400' 
-        : 'bg-white/[0.02] border-white/5 text-slate-500 hover:border-white/10'
-    }`}
-  >
-    {icon}
-    <span className="text-sm font-semibold">{label}</span>
-  </div>
-);
+
 
 export default Settings;
