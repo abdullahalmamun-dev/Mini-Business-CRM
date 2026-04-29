@@ -1,6 +1,11 @@
 # Mini Business CRM 🚀
 
+**Live Demo**: [https://mini-business-crm-frontend.vercel.app/](https://mini-business-crm-frontend.vercel.app/)
+
 A professional, high-performance CRM system designed for small businesses to manage customer relationships, team tasks, and real-time analytics. Built with a modern **React (Vite) + Node.js (Express) + MySQL** stack.
+
+> [!NOTE]
+> **Real-time Notifications**: Persistent WebSockets (Socket.io) are supported in local development but are disabled in the Vercel production environment due to serverless function limitations.
 
 ---
 

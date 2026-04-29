@@ -10,9 +10,10 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || window.location.hostname.includes('vercel.app')) return;
 
-    const socket = io('https://mini-business-crm-backend.vercel.app'); 
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    const socket = io(socketUrl); 
 
     socket.on('notification', (notification) => {
 
