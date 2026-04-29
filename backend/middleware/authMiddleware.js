@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const verifyToken = (req, res, next) => {
   let token;
   const authHeader = req.headers.authorization || req.headers['x-authorization'];
+  
+  // Log all headers for production debugging
+  console.log('[Auth Debug] Incoming Headers:', JSON.stringify(req.headers));
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.split(' ')[1];
@@ -10,8 +13,8 @@ const verifyToken = (req, res, next) => {
     token = req.cookies.token;
   }
   
-  if (!token) {
-    console.log('[Auth Debug]: No token found in headers or cookies');
+  if (!token || token === 'null' || token === 'undefined') {
+    console.log('[Auth Debug]: No valid token found in headers or cookies. AuthHeader:', authHeader);
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
 
@@ -22,7 +25,7 @@ const verifyToken = (req, res, next) => {
     console.log('[Auth Debug]: Token verified for user:', decoded.id);
     next();
   } catch (error) {
-    console.log('[Auth Debug]: Token verification failed:', error.message);
+    console.log('[Auth Debug]: Token verification failed:', error.message, 'Token snippet:', token.substring(0, 10));
     res.status(401).json({ message: 'Invalid or expired token.' });
   }
 };
